@@ -3,8 +3,10 @@ require 'mongo_mapper'
 module MongoMapper
   module Plugins
     module Sluggable
-      def self.configure(model)
-        class << model
+      extend ActiveSupport::Concern
+      
+      included do
+        class << self
           alias_method :origin_find, :find
           def find(*args)
             arg_f = args.first
@@ -28,13 +30,18 @@ module MongoMapper
             :index        => true,
             :method       => :parameterize,
             :scope        => nil,
-            :callback     => :before_validation_on_create,
+            :max_length   => 256,
+            :callback     => [:before_validation, {:on => :create}],
             :force        => false
           }.merge(options)
 
           key slug_options[:key], String, :index => slug_options[:index]
 
-          self.send(slug_options[:callback], :set_slug)
+          if slug_options[:callback].is_a?(Array)
+            self.send(slug_options[:callback][0], :set_slug, slug_options[:callback][1])
+          else
+            self.send(slug_options[:callback], :set_slug)
+          end
         end
       end
 
@@ -47,7 +54,7 @@ module MongoMapper
           to_slug = self[options[:to_slug]]
           return if to_slug.blank?
 
-          the_slug = raw_slug = to_slug.send(options[:method]).to_s
+          the_slug = raw_slug = to_slug.send(options[:method]).to_s[0...options[:max_length]]
 
           conds = {}
           conds[options[:key]]   = the_slug
@@ -62,7 +69,7 @@ module MongoMapper
 
           self.send(:"#{options[:key]}=", the_slug)
         end
-        
+
         def to_param
           options = self.class.slug_options
           ( self.send(options[:key]) || self.id ).to_s
