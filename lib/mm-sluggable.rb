@@ -38,7 +38,16 @@ module MongoMapper
           key slug_options[:key], String, :index => slug_options[:index]
 
           if slug_options[:callback].is_a?(Array)
-            self.send(slug_options[:callback][0], :set_slug, slug_options[:callback][1])
+            condition = slug_options[:callback][1]
+            if Gem::Version.new(MongoMapper::Version) <= Gem::Version.new("0.9.1")
+              context = slug_options[:callback][1][:on]
+              if context == :create
+                condition = {:if => Proc.new { |record| record.new_record? }}
+              elsif context == :update
+                condition = {:if => Proc.new { |record| !record.new_record? }}
+              end
+            end
+            self.send(slug_options[:callback][0], :set_slug, condition)
           else
             self.send(slug_options[:callback], :set_slug)
           end
