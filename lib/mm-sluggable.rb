@@ -1,28 +1,30 @@
 require 'mongo_mapper'
 
+module Plucky
+  class Query
+    alias_method :find_without_sluggable, :find
+    def find(*args)
+      arg_f = args.first
+      if (args.size == 1) && arg_f.is_a?(String) && ( arg_f !~ /^[0-9a-f]{24}$/i )
+        fields = self.model.all_slug_fields
+        record = nil
+        fields.find do |options|
+          conds = {}
+          conds[options[:key]] = arg_f
+          record = first( conds )
+        end
+        record
+      else
+        find_without_sluggable *args
+      end
+    end
+  end
+end
+
 module MongoMapper
   module Plugins
     module Sluggable
       extend ActiveSupport::Concern
-
-      included do
-        class << self
-          alias_method :origin_find, :find
-          def find(*args)
-            arg_f = args.first
-            if (args.size == 1) && arg_f.is_a?(String) && ( arg_f !~ /^[0-9a-f]{24}$/i )
-              fields = all_slug_fields
-              record = nil
-              fields.find do |options|
-                record = first options[:key] => arg_f
-              end
-              record
-            else
-              origin_find *args
-            end
-          end
-        end
-      end
 
       module ClassMethods
         def sluggable(to_slug = :title, options = {})
