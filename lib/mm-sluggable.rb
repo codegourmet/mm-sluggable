@@ -97,6 +97,8 @@ module MongoMapper
 
             the_slug = raw_slug = to_slug.send(options[:method]).to_s[0...options[:max_length]]
 
+            return if the_slug == self[options[:key]]
+
             conds = {}
             conds[options[:key]]   = the_slug
             conds[options[:scope]] = self.send(options[:scope]) if options[:scope]
