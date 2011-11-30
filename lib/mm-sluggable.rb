@@ -5,7 +5,7 @@ module Plucky
     alias_method :find_without_sluggable, :find
     def find(*args)
       arg_f = args.first
-      if (args.size == 1) && arg_f.is_a?(String) && ( arg_f !~ /^[0-9a-f]{24}$/i )
+      if (args.size == 1) && arg_f.is_a?(String) && self.model.respond_to?(:sluggable) && ( arg_f !~ /^[0-9a-f]{24}$/i )
         fields = self.model.all_slug_fields
         record = nil
         fields.find do |options|
