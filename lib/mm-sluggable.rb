@@ -83,41 +83,39 @@ module MongoMapper
         end
       end
 
-      module InstanceMethods
-        def set_slug
-          slug_fields = self.class.all_slug_fields
+      def set_slug
+        slug_fields = self.class.all_slug_fields
 
-          slug_fields.each do |options|
-            need_set_slug = self.send(options[:key]).blank? || (options[:force] && self.send(:"#{options[:to_slug]}_changed?"))
-            next unless need_set_slug
+        slug_fields.each do |options|
+          need_set_slug = self.send(options[:key]).blank? || (options[:force] && self.send(:"#{options[:to_slug]}_changed?"))
+          next unless need_set_slug
 
-            to_slug = self[options[:to_slug]]
-            next if to_slug.blank?
+          to_slug = self[options[:to_slug]]
+          next if to_slug.blank?
 
-            the_slug = raw_slug = to_slug.send(options[:method]).to_s[0...options[:max_length]]
+          the_slug = raw_slug = to_slug.send(options[:method]).to_s[0...options[:max_length]]
 
-            return if the_slug == self[options[:key]]
+          return if the_slug == self[options[:key]]
 
-            conds = {}
-            conds[options[:key]]   = the_slug
-            conds[options[:scope]] = self.send(options[:scope]) if options[:scope]
+          conds = {}
+          conds[options[:key]]   = the_slug
+          conds[options[:scope]] = self.send(options[:scope]) if options[:scope]
 
-            # todo - remove the loop and use regex instead so we can do it in one query
-            i = 0
-            while self.class.first(conds)
-              i += 1
-              conds[options[:key]] = the_slug = "#{raw_slug}-#{i}"
-            end
-
-            self.send(:"#{options[:key]}=", the_slug)
+          # todo - remove the loop and use regex instead so we can do it in one query
+          i = 0
+          while self.class.first(conds)
+            i += 1
+            conds[options[:key]] = the_slug = "#{raw_slug}-#{i}"
           end
-        end
 
-        def to_param(suffix=I18n.locale)
-          options = self.class.all_slug_fields
-          options = options.length > 1 ? options.find {|field| field[:key].to_s.ends_with? suffix.to_s } : options.first
-          ( self.send(options[:key]) || self.id ).to_s
+          self.send(:"#{options[:key]}=", the_slug)
         end
+      end
+
+      def to_param(suffix=I18n.locale)
+        options = self.class.all_slug_fields
+        options = options.length > 1 ? options.find {|field| field[:key].to_s.ends_with? suffix.to_s } : options.first
+        ( self.send(options[:key]) || self.id ).to_s
       end
     end
   end
