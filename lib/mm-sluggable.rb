@@ -35,7 +35,6 @@ module MongoMapper
             :to_slug      => to_slug,
             :key          => :slug,
             :locales      => nil,
-            :index        => true,
             :method       => :parameterize,
             :scope        => nil,
             :max_length   => 256,
@@ -46,7 +45,7 @@ module MongoMapper
           # now define a slug key for all slugged fields
           slug_fields = all_slug_fields
           slug_fields.each do |field_options|
-            key field_options[:key], String, :index => field_options[:index]
+            key field_options[:key], String
           end
 
           if slug_options[:callback].is_a?(Array)
