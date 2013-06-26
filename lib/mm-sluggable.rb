@@ -72,9 +72,10 @@ module MongoMapper
           if slug_options[:locales].present?
             # put I18n.locale to the beginning so the finder always looks
             # for the current locale's slug first. else, we might suffer name clashes
-            slug_options[:locales].sort!{|a, b| (a == I18n.locale ? -1 : (b == I18n.locale ? 1 : 0))}
+            locales = slug_options[:locales].dup
+            locales.sort!{|a, b| (a == I18n.locale ? -1 : (b == I18n.locale ? 1 : 0))}
 
-            slug_options[:locales].each do |loc|
+            locales.each do |loc|
               options = slug_options.dup
               options[:key] = "#{options[:key]}_#{loc}".to_sym
               options[:to_slug] = "#{options[:to_slug]}_#{loc}".to_sym
