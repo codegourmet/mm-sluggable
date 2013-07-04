@@ -131,9 +131,40 @@ describe "MongoMapper::Plugins::Sluggable" do
     end
   end
 
+  describe "with locales" do
+    before(:each) do
+      @klass.sluggable :title, :history => true, :callback => :before_save, :force => true, :locales => [:de, :en]
+
+      @article_a = @klass.create(:title_de => "title_de", :title_en => "title_en")
+
+      @article_b = @klass.create(
+        :title_de => "title_de", # provoke intra-locale-collision
+        :title_en => "title_de"  # provoke inter-locale-collision
+      )
+    end
+
+    it "should set a slug for each locale" do
+      @article_a.slug_de.should eq ["title_de"]
+      @article_a.slug_en.should eq ["title_en"]
+    end
+
+    it "should resolve slug collisions only inside one locale" do
+      @article_b.slug_de.should eq ["title_de-1"]
+      @article_b.slug_en.should eq ["title_de"]
+    end
+
+    it "should first search the current locale, then all others" do
+      I18n.locale = :de
+      @klass.find("title_de").should eq @article_a
+
+      I18n.locale = :en
+      @klass.find("title_de").should eq @article_b
+    end
+  end
+
   describe "with history" do
     before(:each) do
-      @klass.sluggable :title, :history => true, callback: :before_save, force: true
+      @klass.sluggable :title, :history => true, :callback => :before_save, :force => true
 
       @article_a = @klass.create(:title => "article a")
       @article_a.update_attribute(:title, "article a changed")

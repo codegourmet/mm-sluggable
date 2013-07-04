@@ -16,6 +16,8 @@ def article_class
     plugin MongoMapper::Plugins::Sluggable
 
     key :title,       String
+    key :title_de,    String
+    key :title_en,    String
     key :account_id,  Integer
   end
 
