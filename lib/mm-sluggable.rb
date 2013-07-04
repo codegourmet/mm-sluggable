@@ -39,13 +39,14 @@ module MongoMapper
             :scope        => nil,
             :max_length   => 256,
             :callback     => [:before_validation, {:on => :create}],
-            :force        => false
+            :force        => false,
+            :history      => true
           }.merge(options)
 
           # now define a slug key for all slugged fields
           slug_fields = all_slug_fields
           slug_fields.each do |field_options|
-            key field_options[:key], String
+            key field_options[:key], (slug_options[:history] ? Array : String)
           end
 
           if slug_options[:callback].is_a?(Array)
@@ -113,14 +114,20 @@ module MongoMapper
             conds[options[:key]] = the_slug = "#{raw_slug}-#{i}"
           end
 
-          self.send(:"#{options[:key]}=", the_slug)
+          if options[:history]
+            self.send(:"#{options[:key]}") << the_slug
+          else
+            self.send(:"#{options[:key]}=", the_slug)
+          end
         end
       end
 
       def to_param(suffix=I18n.locale)
         options = self.class.all_slug_fields
         options = options.length > 1 ? options.find {|field| field[:key].to_s.ends_with? suffix.to_s } : options.first
-        ( self.send(options[:key]) || self.id ).to_s
+        slug_value = self.send(options[:key])
+        slug_value = slug_value.last if slug_value.is_a?(Array)
+        ( slug_value  || self.id ).to_s
       end
     end
   end
