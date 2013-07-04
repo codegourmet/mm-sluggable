@@ -130,7 +130,41 @@ describe "MongoMapper::Plugins::Sluggable" do
       }.should change(@article, :slug).from("testing-123").to("changed-testing-123")
     end
   end
-  
+
+  describe "with history" do
+    before(:each) do
+      @klass.sluggable :title, :history => true, callback: :before_save, force: true
+
+      @article_a = @klass.create(:title => "article a")
+      @article_a.update_attribute(:title, "article a changed")
+
+      @article_b = @klass.create(:title => "article b")
+    end
+
+    it "should store the slug as array" do
+      @article_a.slug.class.should eq Array
+    end
+
+    it "should add the slug and keep the previous one" do
+      @article_a.slug.should eq ["article-a", "article-a-changed"]
+    end
+
+    it "should reuse old slugs of the same record" do
+      @article_a.update_attribute(:title, "article a")
+      @article_a.slug.should eq ["article-a-changed", "article-a"]
+    end
+
+    it "should deliver the most recent slug as param" do
+      @article_a.to_param.should eq "article-a-changed"
+    end
+
+    it "should respect other elements' slug history" do
+      @article_a.update_attribute(:slug, ["article-a", "article-a-changed"])
+      @article_b.update_attribute(:title, "article a")
+      @article_b.slug.should eq ["article-b", "article-a-1"]
+    end
+  end
+
   describe "overrided function" do 
     before(:each) do
       @klass.sluggable :title
