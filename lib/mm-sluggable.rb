@@ -40,7 +40,7 @@ module MongoMapper
             :max_length   => 256,
             :callback     => [:before_validation, {:on => :create}],
             :force        => false,
-            :history      => true
+            :history      => false
           }.merge(options)
 
           # now define a slug key for all slugged fields
@@ -109,13 +109,15 @@ module MongoMapper
 
           # todo - remove the loop and use regex instead so we can do it in one query
           i = 0
-          while self.class.first(conds)
+          until self.class.first(conds).in?(nil, self)
             i += 1
             conds[options[:key]] = the_slug = "#{raw_slug}-#{i}"
           end
 
           if options[:history]
-            self.send(:"#{options[:key]}") << the_slug
+            slug_list = self.send(:"#{options[:key]}")
+            slug_list.delete(the_slug) # remove if already in the list
+            slug_list << the_slug # add as most current slug
           else
             self.send(:"#{options[:key]}=", the_slug)
           end
@@ -127,6 +129,7 @@ module MongoMapper
         options = options.length > 1 ? options.find {|field| field[:key].to_s.ends_with? suffix.to_s } : options.first
         slug_value = self.send(options[:key])
         slug_value = slug_value.last if slug_value.is_a?(Array)
+
         ( slug_value  || self.id ).to_s
       end
     end
