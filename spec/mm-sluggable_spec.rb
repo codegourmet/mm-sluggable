@@ -154,14 +154,19 @@ describe "MongoMapper::Plugins::Sluggable" do
       @article_a.slug.should eq ["article-a-changed", "article-a"]
     end
 
-    it "should deliver the most recent slug as param" do
-      @article_a.to_param.should eq "article-a-changed"
-    end
-
     it "should respect other elements' slug history" do
       @article_a.update_attribute(:slug, ["article-a", "article-a-changed"])
       @article_b.update_attribute(:title, "article a")
       @article_b.slug.should eq ["article-b", "article-a-1"]
+    end
+
+    it "should deliver the most recent slug as param" do
+      @article_a.to_param.should eq "article-a-changed"
+    end
+
+    it "should find element also by past slugs" do
+      @klass.find("article-a-changed").should eq @article_a
+      @klass.find("article-a").should eq @article_a
     end
   end
 
