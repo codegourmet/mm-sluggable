@@ -99,9 +99,16 @@ module MongoMapper
           to_slug = self[options[:to_slug]]
           next if to_slug.blank?
 
-          the_slug = raw_slug = to_slug.send(options[:method]).to_s[0...options[:max_length]]
+          if options[:method].is_a?(Proc)
+            raw_slug = options[:method].call(self, to_slug)
+          else
+            raw_slug = to_slug.send(options[:method])
+          end
+          raw_slug = raw_slug.to_s[0...options[:max_length]]
 
-          return if the_slug == self[options[:key]]
+          the_slug = raw_slug
+
+          return if (the_slug == self[options[:key]]) || the_slug.blank?
 
           conds = {}
           conds[options[:key]]   = the_slug

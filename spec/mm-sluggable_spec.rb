@@ -201,6 +201,28 @@ describe "MongoMapper::Plugins::Sluggable" do
     end
   end
 
+  describe "slug method as a proc" do
+    before(:each) do
+      @klass.sluggable(
+        :title, :callback => :before_save, :force => true,
+        :method => lambda{|record, slug_value|
+          "#{record.account_id}_#{slug_value.parameterize}"
+        }
+      )
+
+      @article_a = @klass.create(:title => "a", :account_id => 1)
+      @article_a.update_attribute(:title, "article a")
+
+      @article_b = @klass.create(:title => "b", :account_id => 2)
+      @article_b.update_attribute(:title, "article b")
+    end
+
+    it "should call the proc" do
+      @article_a.slug.should eq "1_article-a"
+      @article_b.slug.should eq "2_article-b"
+    end
+  end
+
   describe "overrided function" do 
     before(:each) do
       @klass.sluggable :title
