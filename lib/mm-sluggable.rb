@@ -94,7 +94,8 @@ module MongoMapper
         # For example there are collisions which are like a chain. These would only be solvable
         # in one specific order, which we can't guarantee.
         def reset_all_slugs!(collection = [])
-          collection ||= self.all
+          collection = collection.presence || self.all
+
           collection.each do |record|
             record.wipe_slugs
 
