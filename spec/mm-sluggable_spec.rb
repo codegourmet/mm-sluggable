@@ -243,6 +243,30 @@ describe "MongoMapper::Plugins::Sluggable" do
     end
   end
 
+  describe "reset_all_slugs!" do
+    it "should reset all slugs, discarding collisions" do
+      @klass.sluggable :title
+
+      @articles = [
+        @klass.create(:title => "testing"),
+        @klass.create(:title => "testing")
+      ]
+
+      # create direct collision. this inconsistency can't happen normally,
+      # but it simulates a difficult to resolve collision situation.
+      @articles.each {|article| article.set(slug: "testing")}
+      @articles.each(&:reload)
+
+      @articles.each {|article| article.slug.should eq "testing"}
+
+      @klass.reset_all_slugs!
+      @articles.each(&:reload)
+
+      @articles[0].slug.should eq "testing"
+      @articles[1].slug.should eq "testing-1"
+    end
+  end
+
   describe "overrided function" do 
     before(:each) do
       @klass.sluggable :title
@@ -253,7 +277,7 @@ describe "MongoMapper::Plugins::Sluggable" do
         @article.to_param.should eq @article.slug
       end
       it "should return the id when slug is nil" do 
-        @article.stub!(:slug).and_return(nil)
+        @article.stub(:slug).and_return(nil)
         @article.to_param.should eq @article.id.to_s
       end  
     end   

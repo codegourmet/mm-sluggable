@@ -87,6 +87,34 @@ module MongoMapper
           end
           slug_fields
         end
+
+        # sometimes, you want to reset all slugs for a model at once, to resolve collisions.
+        # this only works if we first empty all _persisted_ slugs, since else the collisions
+        # would still occur.
+        # For example there are collisions which are like a chain. These would only be solvable
+        # in one specific order, which we can't guarantee.
+        def reset_all_slugs!
+          records = self.all
+          records.each do |record|
+            record.wipe_slugs
+
+            # update wiped slugs without triggering sluggable
+            slug_data = {}
+            slug_fields = self.all_slug_fields
+            slug_fields.each do |options|
+              key = options[:key]
+              slug_data[key] = record.send(:"#{key}")
+            end
+
+            record.set(slug_data)
+          end
+
+          # now update all with triggering sluggable
+          records.each do |record|
+            record.set_slug
+            record.save(validate: false)
+          end
+        end
       end
 
       def set_slug
@@ -140,9 +168,8 @@ module MongoMapper
         ( slug_value  || self.id ).to_s
       end
 
-      def reset_slug!
+      def wipe_slugs
         slug_fields = self.class.all_slug_fields
-
         slug_fields.each do |options|
           if options[:history]
             self.send(:"#{options[:key]}=", [])
@@ -150,9 +177,16 @@ module MongoMapper
             self.send(:"#{options[:key]}=", '')
           end
         end
+      end
 
+      def reset_slug
+        self.wipe_slugs
         self.set_slug
-        self.save!
+      end
+
+      def reset_slug!
+        self.reset_slug
+        self.save(validate: false)
       end
     end
   end
