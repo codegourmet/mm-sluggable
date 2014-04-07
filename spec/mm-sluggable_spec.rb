@@ -252,6 +252,10 @@ describe "MongoMapper::Plugins::Sluggable" do
         @klass.create(:title => "testing")
       ]
 
+      @article = @klass.create(:title => "testing")
+      @article.set(slug: "testing")
+      @article.reload
+
       # create direct collision. this inconsistency can't happen normally,
       # but it simulates a difficult to resolve collision situation.
       @articles.each {|article| article.set(slug: "testing")}
@@ -259,11 +263,14 @@ describe "MongoMapper::Plugins::Sluggable" do
 
       @articles.each {|article| article.slug.should eq "testing"}
 
-      @klass.reset_all_slugs!
+      @klass.reset_all_slugs!(@articles)
       @articles.each(&:reload)
 
-      @articles[0].slug.should eq "testing"
-      @articles[1].slug.should eq "testing-1"
+      # article shouldn't be touched because not passed into method.
+      @article.slug.should eq "testing"
+
+      @articles[0].slug.should eq "testing-1"
+      @articles[1].slug.should eq "testing-2"
     end
   end
 
