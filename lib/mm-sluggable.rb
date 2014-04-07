@@ -139,6 +139,21 @@ module MongoMapper
 
         ( slug_value  || self.id ).to_s
       end
+
+      def reset_slug!
+        slug_fields = self.class.all_slug_fields
+
+        slug_fields.each do |options|
+          if options[:history]
+            self.send(:"#{options[:key]}=", [])
+          else
+            self.send(:"#{options[:key]}=", '')
+          end
+        end
+
+        self.set_slug
+        self.save!
+      end
     end
   end
 end

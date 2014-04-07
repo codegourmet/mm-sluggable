@@ -223,6 +223,26 @@ describe "MongoMapper::Plugins::Sluggable" do
     end
   end
 
+  describe "reset_slug!" do
+    it "should reset slug correctly" do
+      @klass.sluggable :title
+      @article = @klass.create(:title => "testing")
+      @article2 = @klass.create(:title => "testing")
+
+      @article.slug.should eq "testing"
+      @article2.slug.should eq "testing-1"
+
+      @article.title = "test"
+      @article.reset_slug!
+      @article.save
+
+      @article2.reset_slug!
+      @article2.save
+
+      @article2.slug.should eq "testing"
+    end
+  end
+
   describe "overrided function" do 
     before(:each) do
       @klass.sluggable :title
