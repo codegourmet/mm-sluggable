@@ -96,7 +96,7 @@ module MongoMapper
         def reset_all_slugs!(collection = [])
           collection ||= self.all
           collection.each do |record|
-            collection.wipe_slugs
+            record.wipe_slugs
 
             # update wiped slugs without triggering sluggable
             slug_data = {}
