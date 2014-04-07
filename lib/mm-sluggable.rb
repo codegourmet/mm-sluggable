@@ -93,10 +93,10 @@ module MongoMapper
         # would still occur.
         # For example there are collisions which are like a chain. These would only be solvable
         # in one specific order, which we can't guarantee.
-        def reset_all_slugs!
-          records = self.all
-          records.each do |record|
-            record.wipe_slugs
+        def reset_all_slugs!(collection = [])
+          collection ||= self.all
+          collection.each do |record|
+            collection.wipe_slugs
 
             # update wiped slugs without triggering sluggable
             slug_data = {}
@@ -110,7 +110,7 @@ module MongoMapper
           end
 
           # now update all with triggering sluggable
-          records.each do |record|
+          collection.each do |record|
             record.set_slug
             record.save(validate: false)
           end
