@@ -1,6 +1,6 @@
 require "rubygems"
-require "rake/gempackagetask"
-require "rake/rdoctask"
+require 'rubygems/package_task'
+require "rdoc/task"
 
 require 'rspec/core/rake_task'
 RSpec::Core::RakeTask.new(:spec)
@@ -46,7 +46,7 @@ end
 #
 # To publish your gem online, install the 'gemcutter' gem; Read more
 # about that here: http://gemcutter.org/pages/gem_docs
-Rake::GemPackageTask.new(spec) do |pkg|
+Gem::PackageTask.new(spec) do |pkg|
   pkg.gem_spec = spec
 end
 
